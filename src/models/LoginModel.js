@@ -28,12 +28,28 @@ class Login {
     const salt = bcryptjs.genSaltSync();
     this.body.password = bcryptjs.hashSync(this.body.password, salt);
 
-    try {
-      this.user = await LoginModel.create(this.body);
-    } catch (error) {
-      console.log(error);
+    this.user = await LoginModel.create(this.body);
+  }
+
+    async login() {
+    this.validate();
+
+    if (this.errors.length > 0) return;
+
+    this.user = await LoginModel.findOne({ email: this.body.email });
+
+    if (!this.user) {
+      this.errors.push("Usuário não encontrado");
+      return;
+    }
+
+    if (!bcryptjs.compareSync(this.body.password, this.user.password)) {
+      this.errors.push("Senha inválida");
+      this.user = null;
+      return;
     }
   }
+
 
   async userExistis() {
     this.user = await LoginModel.findOne({ email: this.body.email });
